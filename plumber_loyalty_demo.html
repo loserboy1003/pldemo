@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PlumbRewards — Loyalty System</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--green:#1D9E75;--green-light:#E1F5EE;--green-dark:#0F6E56;--amber:#BA7517;--amber-light:#FAEEDA;--red:#A32D2D;--red-light:#FCEBEB;--blue:#185FA5;--blue-light:#E6F1FB;--border:#e5e5e5;--bg:#f7f7f5;--card:#fff;--text:#1a1a1a;--muted:#6b6b6b;--radius:10px}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .navbar{background:#fff;border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+  .brand{font-size:17px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--green)}
+  .brand span{color:var(--text);font-weight:400;font-size:15px}
+  .nav-links{display:flex;gap:4px}
+  .nav-btn{padding:6px 14px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s}
+  .nav-btn:hover,.nav-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+  .page{display:none;max-width:720px;margin:0 auto;padding:24px 16px}
+  .page.active{display:block}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
+  .card-title{font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .form-row.full{grid-template-columns:1fr}
+  .fg{display:flex;flex-direction:column;gap:4px}
+  .fg label{font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+  .fg input,.fg select{padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;background:#fff;color:var(--text);outline:none;transition:border .15s}
+  .fg input:focus,.fg select:focus{border-color:var(--green)}
+  .btn{padding:10px 22px;border-radius:8px;border:none;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s}
+  .btn-primary{background:var(--green);color:#fff}
+  .btn-primary:hover{background:var(--green-dark)}
+  .btn-sm{padding:6px 14px;font-size:12px;border-radius:6px;border:1px solid;cursor:pointer;font-weight:500}
+  .btn-approve{background:#E1F5EE;color:var(--green-dark);border-color:#5DCAA5}
+  .btn-reject{background:var(--red-light);color:var(--red);border-color:#F09595}
+  .metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .metric{background:#f0faf5;border-radius:8px;padding:14px 16px}
+  .metric-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .metric-value{font-size:22px;font-weight:700;color:var(--green)}
+  .points-hero{text-align:center;padding:28px 0 20px}
+  .points-num{font-size:60px;font-weight:700;color:var(--green);line-height:1}
+  .points-sub{font-size:13px;color:var(--muted);margin-top:6px}
+  .progress-wrap{background:#e9e9e9;border-radius:20px;height:10px;margin:18px 0 6px;overflow:hidden}
+  .progress-bar{height:10px;border-radius:20px;background:var(--green);transition:width .4s}
+  .progress-hint{font-size:12px;color:var(--muted);text-align:center}
+  .scan-box{border:2px dashed var(--border);border-radius:var(--radius);text-align:center;padding:36px 20px;cursor:pointer;transition:border .2s}
+  .scan-box:hover{border-color:var(--green)}
+  .scan-icon{font-size:48px;margin-bottom:10px}
+  .scan-label{font-size:14px;color:var(--muted)}
+  .alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;display:none}
+  .alert.show{display:flex;align-items:center;gap:10px}
+  .alert-success{background:var(--green-light);color:var(--green-dark);border:1px solid #5DCAA5}
+  .alert-error{background:var(--red-light);color:var(--red);border:1px solid #F09595}
+  .history-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+  .history-row:last-child{border:none}
+  .history-title{font-size:14px;font-weight:500}
+  .history-meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .pts-badge{font-size:13px;font-weight:600}
+  .pts-pos{color:var(--green)}
+  .pts-neg{color:var(--red)}
+  .reward-row{display:flex;justify-content:space-between;align-items:center;padding:14px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px}
+  .reward-name{font-weight:600;font-size:14px}
+  .reward-sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .pill{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+  .pill-pending{background:var(--amber-light);color:var(--amber)}
+  .pill-approved{background:var(--green-light);color:var(--green-dark)}
+  .pill-rejected{background:var(--red-light);color:var(--red)}
+  .pill-verified{background:var(--blue-light);color:var(--blue)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:8px 10px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-size:12px}
+  td{padding:10px 10px;border-bottom:1px solid var(--border)}
+  .info-box{background:#f5f5f3;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);margin-bottom:16px;display:flex;gap:8px;align-items:flex-start}
+  .tab-bar{display:flex;gap:8px;margin-bottom:20px}
+  .tab{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;color:var(--muted)}
+  .tab.active{background:var(--green);color:#fff;border-color:var(--green)}
+  input[type=text]#manualCode{flex:1}
+  .flex-row{display:flex;gap:8px;align-items:center}
+  #toast{position:fixed;bottom:24px;right:24px;background:#1a1a1a;color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+  #toast.show{opacity:1}
+  .empty{text-align:center;padding:32px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<nav class="navbar">
+  <div class="brand">💧 PlumbRewards <span>by Your Brand</span></div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="nav('register',this)">Register</button>
+    <button class="nav-btn" onclick="nav('dashboard',this)">Dashboard</button>
+    <button class="nav-btn" onclick="nav('scan',this)">Scan</button>
+    <button class="nav-btn" onclick="nav('redeem',this)">Redeem</button>
+    <button class="nav-btn" onclick="nav('admin',this)">Admin</button>
+  </div>
+</nav>
+
+<!-- REGISTER -->
+<div id="register" class="page active">
+  <div class="card">
+    <div class="card-title">🔧 Plumber / Mistri Registration</div>
+    <div class="form-row">
+      <div class="fg"><label>Full Name</label><input id="r_name" type="text" placeholder="Ramesh Kumar" /></div>
+      <div class="fg"><label>Phone</label><input id="r_phone" type="tel" placeholder="+91 98765 43210" /></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Email</label><input id="r_email" type="email" placeholder="ramesh@email.com" /></div>
+      <div class="fg"><label>City</label><input id="r_city" type="text" placeholder="Mumbai" /></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>State</label>
+        <select id="r_state">
+          <option value="">Select state</option>
+          <option>Maharashtra</option><option>Karnataka</option><option>Delhi</option>
+          <option>Gujarat</option><option>Tamil Nadu</option><option>Rajasthan</option>
+          <option>Uttar Pradesh</option><option>West Bengal</option>
+        </select>
+      </div>
+      <div class="fg"><label>Aadhaar Number (KYC)</label><input id="r_aadhaar" type="text" placeholder="XXXX XXXX XXXX" maxlength="14" /></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Work Type</label>
+        <select id="r_type">
+          <option>Plumber</option><option>Mistri</option><option>Contractor</option><option>Electrician</option>
+        </select>
+      </div>
+      <div class="fg"><label>Experience (years)</label><input id="r_exp" type="number" placeholder="5" min="0" /></div>
+    </div>
+    <div class="info-box">🔒 Your Aadhaar is used only for identity verification before cash payouts. It is stored securely and never shared.</div>
+    <button class="btn btn-primary" onclick="registerUser()">Register & Start Earning →</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page">
+  <div class="info-box">👤 Viewing as: <strong id="dash_name">—</strong> &nbsp;|&nbsp; Log in as a different user by registering first.</div>
+  <div class="metric-grid">
+    <div class="metric"><div class="metric-label">Points Balance</div><div class="metric-value" id="dash_pts">0</div></div>
+    <div class="metric"><div class="metric-label">Coupons Scanned</div><div class="metric-value" id="dash_scans">0</div></div>
+    <div class="metric"><div class="metric-label">Cash Earned</div><div class="metric-value" id="dash_cash">₹0</div></div>
+  </div>
+  <div class="card">
+    <div class="points-hero">
+      <div class="points-num" id="dash_big_pts">0</div>
+      <div class="points-sub">loyalty points</div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="dash_bar" style="width:0%"></div></div>
+    <div class="progress-hint" id="dash_hint">Scan coupons to start earning!</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Scan History</div>
+    <div id="dash_history"><div class="empty">No scans yet. Scan a coupon to get started!</div></div>
+  </div>
+</div>
+
+<!-- SCAN -->
+<div id="scan" class="page">
+  <div class="card">
+    <div class="card-title">📷 Scan Coupon QR Code</div>
+    <div class="info-box">ℹ️ In the real app, this opens your phone camera to scan the QR code on the coupon card inside the product packaging.</div>
+    <div class="scan-box" onclick="simulateScan()">
+      <div class="scan-icon">📸</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:6px">Tap to Scan QR Code</div>
+      <div class="scan-label">Opens camera on mobile device</div>
+    </div>
+    <div id="scan_alert" class="alert"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px">Or enter coupon code manually:</div>
+      <div class="flex-row">
+        <input type="text" id="manualCode" placeholder="e.g. PLMB-2847" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;flex:1;outline:none" />
+        <button class="btn btn-primary" onclick="submitManual()">Submit</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🎟️ Demo Coupon Codes (try these!)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div id="c1" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px" onclick="useDemo('PLMB-1001','c1')">
+        <div style="font-weight:600">PLMB-1001</div><div style="color:var(--muted);font-size:12px">60 points · Pipe Fitting Kit</div>
+      </div>
+      <div id="c2" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px" onclick="useDemo('PLMB-1002','c2')">
+        <div style="font-weight:600">PLMB-1002</div><div style="color:var(--muted);font-size:12px">80 points · Premium Valve</div>
+      </div>
+      <div id="c3" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px" onclick="useDemo('PLMB-1003','c3')">
+        <div style="font-weight:600">PLMB-1003</div><div style="color:var(--muted);font-size:12px">60 points · Elbow Joint Pack</div>
+      </div>
+      <div id="c4" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px" onclick="useDemo('PLMB-1004','c4')">
+        <div style="font-weight:600">PLMB-1004</div><div style="color:var(--muted);font-size:12px">100 points · Ball Valve Set</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REDEEM -->
+<div id="redeem" class="page">
+  <div class="card">
+    <div class="card-title">💰 Redeem Points for Cash</div>
+    <div id="redeem_balance" style="font-size:14px;color:var(--muted);margin-bottom:16px">Your balance: <strong id="redeem_pts" style="color:var(--green)">0 pts</strong></div>
+    <div id="reward_500" class="reward-row">
+      <div><div class="reward-name">₹500 Cash Reward</div><div class="reward-sub">Requires 1,000 points</div></div>
+      <button class="btn btn-sm btn-approve" onclick="requestRedeem(1000,500)">Redeem</button>
+    </div>
+    <div id="reward_1500" class="reward-row">
+      <div><div class="reward-name">₹1,500 Cash Reward</div><div class="reward-sub">Requires 3,000 points</div></div>
+      <button class="btn btn-sm btn-approve" onclick="requestRedeem(3000,1500)">Redeem</button>
+    </div>
+    <div id="reward_3000" class="reward-row">
+      <div><div class="reward-name">₹3,000 Cash Reward</div><div class="reward-sub">Requires 6,000 points</div></div>
+      <button class="btn btn-sm btn-approve" onclick="requestRedeem(6000,3000)">Redeem</button>
+    </div>
+    <div class="info-box" style="margin-top:16px">💳 After requesting, admin reviews and sends payout via UPI / bank transfer within 2–3 working days.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📜 My Redemption Requests</div>
+    <div id="my_redemptions"><div class="empty">No redemption requests yet.</div></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="page">
+  <div class="info-box">🔐 Admin Panel — Brand owner access only. In production, this is protected by a password.</div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="adminTab('redemptions',this)">Pending Redemptions</button>
+    <button class="tab" onclick="adminTab('users',this)">All Users</button>
+    <button class="tab" onclick="adminTab('coupons',this)">Coupon Log</button>
+  </div>
+
+  <div id="at_redemptions">
+    <div class="card">
+      <div class="card-title">⏳ Pending Redemption Requests</div>
+      <div id="admin_redemptions"><div class="empty">No pending requests.</div></div>
+    </div>
+  </div>
+
+  <div id="at_users" style="display:none">
+    <div class="card">
+      <div class="card-title">👷 Registered Plumbers & Mistris</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>City</th><th>Type</th><th>Points</th><th>KYC</th></tr></thead>
+          <tbody id="admin_users_body"><tr><td colspan="6" class="empty">No users registered yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="at_coupons" style="display:none">
+    <div class="card">
+      <div class="card-title">🎟️ Coupon Scan Log</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Code</th><th>Scanned By</th><th>Points</th><th>Time</th></tr></thead>
+          <tbody id="admin_coupon_body"><tr><td colspan="4" class="empty">No coupons scanned yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+const DB = {
+  users: [],
+  coupons: {
+    'PLMB-1001': { pts: 60, product: 'Pipe Fitting Kit', used: false },
+    'PLMB-1002': { pts: 80, product: 'Premium Valve', used: false },
+    'PLMB-1003': { pts: 60, product: 'Elbow Joint Pack', used: false },
+    'PLMB-1004': { pts: 100, product: 'Ball Valve Set', used: false },
+    'PLMB-1005': { pts: 60, product: 'Reducer Fitting', used: false },
+    'PLMB-1006': { pts: 80, product: 'Gate Valve', used: false },
+  },
+  scanLog: [],
+  redemptions: [],
+  currentUser: null
+};
+
+function save() { try { localStorage.setItem('plmb_db', JSON.stringify(DB)); } catch(e){} }
+function load() {
+  try {
+    const d = localStorage.getItem('plmb_db');
+    if (d) { const p = JSON.parse(d); Object.assign(DB, p); }
+  } catch(e){}
+}
+load();
+
+// ── NAV ───────────────────────────────────────────────
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'dashboard') refreshDash();
+  if (id === 'redeem') refreshRedeem();
+  if (id === 'admin') refreshAdmin();
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── REGISTER ──────────────────────────────────────────
+function registerUser() {
+  const name = document.getElementById('r_name').value.trim();
+  const phone = document.getElementById('r_phone').value.trim();
+  const email = document.getElementById('r_email').value.trim();
+  const city = document.getElementById('r_city').value.trim();
+  const state = document.getElementById('r_state').value;
+  const aadhaar = document.getElementById('r_aadhaar').value.trim();
+  const type = document.getElementById('r_type').value;
+  const exp = document.getElementById('r_exp').value;
+
+  if (!name || !phone || !city || !state || !aadhaar) {
+    toast('❌ Please fill all required fields'); return;
+  }
+  if (DB.users.find(u => u.phone === phone)) {
+    toast('⚠️ Phone already registered'); return;
+  }
+
+  const user = { id: 'U' + Date.now(), name, phone, email, city, state, aadhaar, type, exp, points: 0, scans: 0, cashEarned: 0, history: [], kyc: 'Verified', joined: new Date().toLocaleDateString('en-IN') };
+  DB.users.push(user);
+  DB.currentUser = user;
+  save();
+  toast('✅ Registered successfully! Welcome, ' + name);
+  refreshDash();
+  setTimeout(() => { document.querySelectorAll('.nav-btn')[1].click(); }, 800);
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function refreshDash() {
+  const u = DB.currentUser;
+  if (!u) { document.getElementById('dash_name').textContent = 'Not logged in — register first'; return; }
+  const fresh = DB.users.find(x => x.id === u.id);
+  if (!fresh) return;
+  document.getElementById('dash_name').textContent = fresh.name + ' (' + fresh.type + ')';
+  document.getElementById('dash_pts').textContent = fresh.points;
+  document.getElementById('dash_big_pts').textContent = fresh.points.toLocaleString();
+  document.getElementById('dash_scans').textContent = fresh.scans;
+  document.getElementById('dash_cash').textContent = '₹' + fresh.cashEarned;
+  const next = fresh.points < 1000 ? 1000 : fresh.points < 3000 ? 3000 : 6000;
+  const pct = Math.min(100, Math.round((fresh.points / next) * 100));
+  document.getElementById('dash_bar').style.width = pct + '%';
+  const cash = next === 1000 ? 500 : next === 3000 ? 1500 : 3000;
+  const need = Math.max(0, next - fresh.points);
+  document.getElementById('dash_hint').textContent = need === 0 ? '🎉 You can redeem now!' : need + ' more points to earn ₹' + cash.toLocaleString() + ' cash reward';
+  const hEl = document.getElementById('dash_history');
+  if (!fresh.history.length) { hEl.innerHTML = '<div class="empty">No scans yet!</div>'; return; }
+  hEl.innerHTML = fresh.history.slice().reverse().map(h =>
+    `<div class="history-row"><div><div class="history-title">${h.label}</div><div class="history-meta">${h.time}</div></div><div class="pts-badge ${h.pts > 0 ? 'pts-pos' : 'pts-neg'}">${h.pts > 0 ? '+' : ''}${h.pts} pts</div></div>`
+  ).join('');
+}
+
+// ── SCAN ──────────────────────────────────────────────
+function simulateScan() {
+  const codes = Object.keys(DB.coupons).filter(c => !DB.coupons[c].used);
+  if (!codes.length) { showScanAlert(false, 'No more demo coupons available.'); return; }
+  processCode(codes[Math.floor(Math.random() * codes.length)]);
+}
+function submitManual() {
+  const code = document.getElementById('manualCode').value.trim().toUpperCase();
+  if (!code) { toast('Enter a coupon code'); return; }
+  processCode(code);
+  document.getElementById('manualCode').value = '';
+}
+function useDemo(code, elId) {
+  processCode(code);
+}
+function processCode(code) {
+  if (!DB.currentUser) { showScanAlert(false, 'Please register or log in first!'); return; }
+  const c = DB.coupons[code];
+  if (!c) { showScanAlert(false, 'Invalid coupon code: ' + code); return; }
+  if (c.used) {
+    showScanAlert(false, 'Coupon ' + code + ' has already been used!');
+    const el = document.getElementById(code.replace('PLMB-','c').replace('PLMB-100','c'));
+    return;
+  }
+  c.used = true;
+  const u = DB.users.find(x => x.id === DB.currentUser.id);
+  u.points += c.pts; u.scans += 1;
+  u.history.push({ label: 'Coupon ' + code + ' — ' + c.product, pts: c.pts, time: new Date().toLocaleString('en-IN') });
+  DB.scanLog.push({ code, user: u.name, pts: c.pts, time: new Date().toLocaleString('en-IN') });
+  save();
+  showScanAlert(true, `✅ +${c.pts} points added! Coupon ${code} (${c.product}) verified and marked used.`);
+  markDemoUsed(code);
+  refreshDash();
+}
+function showScanAlert(ok, msg) {
+  const el = document.getElementById('scan_alert');
+  el.className = 'alert show ' + (ok ? 'alert-success' : 'alert-error');
+  el.textContent = msg;
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+function markDemoUsed(code) {
+  const map = { 'PLMB-1001':'c1','PLMB-1002':'c2','PLMB-1003':'c3','PLMB-1004':'c4' };
+  const el = document.getElementById(map[code]);
+  if (el) { el.style.opacity = '0.4'; el.style.cursor = 'default'; el.onclick = null; el.querySelector('div:last-child').textContent = '✅ Used'; }
+}
+
+// ── REDEEM ────────────────────────────────────────────
+function refreshRedeem() {
+  const u = DB.currentUser ? DB.users.find(x => x.id === DB.currentUser.id) : null;
+  const pts = u ? u.points : 0;
+  document.getElementById('redeem_pts').textContent = pts + ' pts';
+  [['reward_500',1000],['reward_1500',3000],['reward_3000',6000]].forEach(([id,req]) => {
+    const btn = document.getElementById(id).querySelector('button');
+    if (pts < req) { btn.disabled = true; btn.style.opacity = '0.4'; btn.textContent = 'Need ' + (req-pts) + ' more pts'; }
+    else { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Redeem'; }
+  });
+  const myR = DB.redemptions.filter(r => u && r.userId === u.id);
+  const el = document.getElementById('my_redemptions');
+  if (!myR.length) { el.innerHTML = '<div class="empty">No requests yet.</div>'; return; }
+  el.innerHTML = myR.slice().reverse().map(r =>
+    `<div class="history-row"><div><div class="history-title">₹${r.amount} — ${r.pts} pts</div><div class="history-meta">${r.time}</div></div><span class="pill pill-${r.status}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span></div>`
+  ).join('');
+}
+function requestRedeem(pts, amount) {
+  if (!DB.currentUser) { toast('Please register first'); return; }
+  const u = DB.users.find(x => x.id === DB.currentUser.id);
+  if (u.points < pts) { toast('Not enough points'); return; }
+  DB.redemptions.push({ id: 'R' + Date.now(), userId: u.id, userName: u.name, phone: u.phone, city: u.city, pts, amount, status: 'pending', time: new Date().toLocaleString('en-IN') });
+  u.points -= pts;
+  u.history.push({ label: 'Redemption request — ₹' + amount, pts: -pts, time: new Date().toLocaleString('en-IN') });
+  save(); refreshRedeem(); refreshDash();
+  toast('✅ Redemption request sent! Admin will approve soon.');
+}
+
+// ── ADMIN ─────────────────────────────────────────────
+function adminTab(id, btn) {
+  ['at_redemptions','at_users','at_coupons'].forEach(t => document.getElementById(t).style.display = 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('at_' + id).style.display = '';
+  btn.classList.add('active');
+}
+function refreshAdmin() {
+  // Redemptions
+  const pend = DB.redemptions.filter(r => r.status === 'pending');
+  const rEl = document.getElementById('admin_redemptions');
+  rEl.innerHTML = pend.length ? pend.map(r =>
+    `<div class="redemption-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-weight:600">${r.userName}</div><div style="font-size:12px;color:var(--muted)">${r.city} · ${r.pts} pts → ₹${r.amount} · ${r.time}</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-approve" onclick="approveRedeem('${r.id}')">Approve</button>
+        <button class="btn btn-sm btn-reject" onclick="rejectRedeem('${r.id}')">Reject</button>
+      </div>
+    </div>`).join('') : '<div class="empty">No pending requests 🎉</div>';
+
+  // Users
+  const uEl = document.getElementById('admin_users_body');
+  uEl.innerHTML = DB.users.length ? DB.users.map(u =>
+    `<tr><td><strong>${u.name}</strong></td><td>${u.phone}</td><td>${u.city}</td><td>${u.type}</td><td style="color:var(--green);font-weight:600">${u.points}</td><td><span class="pill pill-verified">${u.kyc}</span></td></tr>`
+  ).join('') : '<tr><td colspan="6" class="empty">No users yet.</td></tr>';
+
+  // Coupons
+  const cEl = document.getElementById('admin_coupon_body');
+  cEl.innerHTML = DB.scanLog.length ? DB.scanLog.slice().reverse().map(s =>
+    `<tr><td><strong>${s.code}</strong></td><td>${s.user}</td><td style="color:var(--green)">+${s.pts} pts</td><td>${s.time}</td></tr>`
+  ).join('') : '<tr><td colspan="4" class="empty">No scans logged yet.</td></tr>';
+}
+function approveRedeem(id) {
+  const r = DB.redemptions.find(x => x.id === id);
+  if (!r) return;
+  r.status = 'approved';
+  const u = DB.users.find(x => x.id === r.userId);
+  if (u) { u.cashEarned += r.amount; }
+  save(); refreshAdmin(); refreshRedeem();
+  toast('✅ Approved ₹' + r.amount + ' for ' + r.userName);
+}
+function rejectRedeem(id) {
+  const r = DB.redemptions.find(x => x.id === id);
+  if (!r) return;
+  r.status = 'rejected';
+  const u = DB.users.find(x => x.id === r.userId);
+  if (u) { u.points += r.pts; u.history.push({ label: 'Redemption rejected — points refunded', pts: r.pts, time: new Date().toLocaleString('en-IN') }); }
+  save(); refreshAdmin(); refreshRedeem();
+  toast('❌ Rejected & points refunded to ' + r.userName);
+}
+
+// restore demo coupon states on load
+Object.keys(DB.coupons).forEach(code => {
+  if (DB.coupons[code].used) markDemoUsed(code);
+});
+</script>
+</body>
+</html>
